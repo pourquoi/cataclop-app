@@ -19,6 +19,7 @@
     "btoa": "^1.2.1",
     "moment": "^2.26.0",
     "moment-locales-webpack-plugin": "^1.2.0",
+    "nativescript-plugin-firebase": "^10.5.2",
     "nativescript-socketio": "^3.3.1",
     "nativescript-toasty": "^3.0.0-alpha.2",
     "nativescript-ui-listview": "^8.2.0",

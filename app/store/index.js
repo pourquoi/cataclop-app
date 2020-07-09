@@ -1,6 +1,8 @@
 import Vue from "nativescript-vue";
 import Vuex from "vuex";
 
+import { ObservableArray } from 'tns-core-modules/data/observable-array';
+
 Vue.use(Vuex)
 
 import moment from 'moment';
@@ -25,6 +27,10 @@ function updateClientInterceptor(user) {
 
 export default new Vuex.Store({
     state: {
+        ui: {
+            hideActionBar: false,
+            title: ''
+        },
         frame: 'races',
         user: null,
         race: null,
@@ -34,6 +40,7 @@ export default new Vuex.Store({
             results: []
         },
         horse: null,
+        stats_horse: null,
         processing: {
             sessions: false,
             race: false,
@@ -48,6 +55,9 @@ export default new Vuex.Store({
         }
     },
     mutations: {
+        updateUI(state, ui) {
+            state.ui = Object.assign(state.ui, ui)
+        },
         login(state, user) {
             state.user = Object.assign({}, user);
             updateClientInterceptor(user)
@@ -58,40 +68,37 @@ export default new Vuex.Store({
         setFrame(state, frame) {
             state.frame = frame;
         },
-        setStatsRace(state, race) {
-            console.log('setStatsRace', race.id)
-            race.player_set.sort(sortPlayers)
-            race._current = state.race && state.race.id == race.id
-            
-            race.player_set = race.player_set.map(p => {
-                p._selected = false
-                p._current = !race._current && state.horse && state.horse.id == p.horse.id
-                p._sibling = !race._current && !p._current && state.race && !!state.race.player_set.find(pp => pp.horse.id == p.horse.id)
-                return p;
-            })
-
-            state.stats_race = race
-        },
-        setRace(state, race) {
+        setRace(state, {race, is_stats}) {
             if( race ) {
-                console.log('setRace', race.id)
+
                 race.player_set.sort(sortPlayers)
-                race._selected = true
+
+                if( is_stats ) {
+                    race._current = state.race && state.race.id == race.id
+                } else {
+                    state.horse = null;
+                    race._selected = true
+                    race._current = false
+                }
                 
-                race.player_set = race.player_set.map(p => {
-                    p._selected = false
-                    p._current = false
-                    p._sibling = false
+                race.player_set = race.player_set.map((p) => {
+                    p._selected = false;
+                    p._current = !race._current && state.horse && state.horse.id == p.horse.id
+                    p._sibling = !race._current && !p._current && state.race && !!state.race.player_set.find(pp => pp.horse.id == p.horse.id)
                     return p;
                 })
             }
-            state.race = race
+            if( is_stats ) {
+                state.stats_race = race
+            } else {
+                state.race = race
 
-            if(state.session) {
-                state.session.race_set.forEach( r => {
-                    r._selected = race && r.id == race.id
-                    return r;
-                })
+                if(state.session) {
+                    state.session.race_set.forEach( r => {
+                        r._selected = race && r.id == race.id
+                        return r;
+                    })
+                }
             }
         },
         setSession(state, session) {
@@ -121,18 +128,14 @@ export default new Vuex.Store({
         setContext(state, context) {
             state.context = Object.assign({}, state.context, context)
         },
-        setHorse(state, horse) {
+        setHorse(state, {horse, is_stats}) {
             horse = { ...{ stats: null, races: { results: [] } }, ...horse }
 
-            if(state.race) {
-                console.log('setHorse', horse.id)
-                
+            if(state.race && is_stats) {
                 state.race.player_set = state.race.player_set.map(p => {
                     p._selected = p.horse && horse &&  p.horse.id == horse.id
                     return p
                 })
-
-                console.log('player_set', state.race.player_set.map(p => [p.horse.id, p._selected]))
             }
 
             horse.races.results = horse.races.results.map(race => {
@@ -167,7 +170,8 @@ export default new Vuex.Store({
                 }
             }
 
-            state.horse = horse
+            if( is_stats ) state.stats_horse = horse
+            else state.horse = horse
         },
         setHorses(state, horses) {
             state.horses = Object.assign({}, horses)
@@ -203,10 +207,9 @@ export default new Vuex.Store({
             return client.get(`/races/${id}`)
                 .then(r => {
                     let race = r.data;
-                    if(is_stats)
-                        commit('setStatsRace', race);
-                    else
-                        commit('setRace', race);
+                    
+                    commit('setRace', {race: race, is_stats: is_stats});
+                    
                     commit('setProcessing', { race: false });
                     return race;
                 })
@@ -253,7 +256,7 @@ export default new Vuex.Store({
                     throw err
                 })
         },
-        loadHorse({ commit }, id) {
+        loadHorse({ commit }, { id, is_stats }) {
             commit('setProcessing', { horse: true });
 
             return client.get(`/horses/${id}`)
@@ -263,7 +266,9 @@ export default new Vuex.Store({
                     return client.get('/races', { params: { horse: horse.id } })
                         .then(r => {
                             horse.races = r.data
-                            commit('setHorse', horse);
+                            
+                            commit('setHorse', {horse: horse, is_stats: is_stats});
+                        
                             commit('setProcessing', { horse: false });
                             return horse;
                         })

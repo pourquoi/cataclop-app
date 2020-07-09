@@ -26,6 +26,8 @@ yarn-error.log*
 tmp/
 typings/
 *.aab
+app/App_Resources/Android/google-services.json
+app/App_Resources/iOS/GoogleService-Info.plist
 
 # Visual Studio Code
 .vscode/*

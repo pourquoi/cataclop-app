@@ -1,139 +1,271 @@
 <template>
-    <Page @navigatedTo="onNavigated">
-        <ActionBar flat>
-            <NavigationButton @tap="onBack" android.systemIcon="ic_menu_back" />
-            <Label class="page-title" :text="title" />
-        </ActionBar>
+    <GridLayout rows="auto, auto, *" v-if="horse">
+        <FlexboxLayout row="0" v-show="showPlayers" class="session" v-if="race">
+            <Label
+                :text="race.session.hippodrome.name + ' - ' + 'R' + race.session.num + 'C' + race.num"
+            />
+        </FlexboxLayout>
 
-        <GridLayout>
-            <GridLayout rows="auto, auto, *" v-if="horse">
-                
-                <FlexboxLayout row="0" v-show="showPlayers" class="session" v-if="race">
-                    <Label :text="race.session.hippodrome.name + ' - ' + 'R' + race.session.num + 'C' + race.num" />
-                </FlexboxLayout>
-
-                <GridLayout row="1" v-show="showPlayers" class="players">
-
-                    <RadListView ref="playerList" v-if="race && race.player_set" orientation="horizontal" for="player in race.player_set" @itemTap="onPlayerTap">
-                        <v-template>
-                            <GridLayout class="players__item" :class="{'players__item--active': player._selected}" :key="'horse-player-' + player.id">
-                                <FlexboxLayout orientation="horizontal" alignItems="center">
-                                    <Label v-if="player.position" :text="player.position" class="pos" verticalAlignment="center" />
-                                    <Label :textWrap="false" :text="'#' + player.num + ' ' + player.horse.name" class="name" verticalAlignment="center" />
-                                </FlexboxLayout>
-                            </GridLayout>
-                        </v-template>
-                    </RadListView>
-
-                </GridLayout>
-
-                <ScrollView row="2">
-
-                    <GridLayout rows="auto, *">
-
-                    <StackLayout row="0" class="header">
-                        <FlexboxLayout row="0" col="0" orientation="horizontal" class="breed" horizontalAlignment="center" alignItems="center" justifyContent="center">
-                            <Image src.decode="font://&#xf6f0;" class="fas" />
-                            <Label :text="horse.sex + ' - ' + horse.breed"></Label>
+        <GridLayout row="1" v-show="showPlayers" class="players">
+            <RadListView
+                ref="playerList"
+                v-if="race && race.player_set"
+                orientation="horizontal"
+                for="player in race.player_set"
+                @itemTap="onPlayerTap"
+            >
+                <v-template>
+                    <GridLayout
+                        class="players__item"
+                        :class="{'players__item--active': player._selected}"
+                        :key="'horse-player-' + player.id"
+                    >
+                        <FlexboxLayout orientation="horizontal" alignItems="center">
+                            <Label
+                                v-if="player.position"
+                                :text="player.position"
+                                class="pos"
+                                verticalAlignment="center"
+                            />
+                            <Label
+                                :textWrap="false"
+                                :text="'#' + player.num + ' ' + player.horse.name"
+                                class="name"
+                                verticalAlignment="center"
+                            />
                         </FlexboxLayout>
+                    </GridLayout>
+                </v-template>
+            </RadListView>
+        </GridLayout>
 
-                        <Label :text="horse.stats.music" class="music"></Label>
+        <ScrollView row="2">
+            <GridLayout rows="auto, *">
+                <StackLayout row="0" class="header">
+                    <FlexboxLayout
+                        row="0"
+                        col="0"
+                        orientation="horizontal"
+                        class="breed"
+                        horizontalAlignment="center"
+                        alignItems="center"
+                        justifyContent="center"
+                    >
+                        <Image src.decode="font://&#xf6f0;" class="fas" />
+                        <Label :text="horse.sex + ' - ' + horse.breed"></Label>
+                    </FlexboxLayout>
 
-                        <GridLayout rows="auto" columns="2*, *" class="header__infos">
+                    <Label :text="horse.stats.music" class="music"></Label>
 
-                            <GridLayout columns="auto, *" rows="auto, auto, auto, auto, auto">
+                    <GridLayout rows="auto" columns="2*, *" class="header__infos">
+                        <GridLayout columns="auto, *" rows="auto, auto, auto, auto, auto">
+                            <Label row="1" col="0" text="# Courses" class="info__label"></Label>
+                            <Label row="1" col="1" :text="horse.stats.race_count"></Label>
 
-                                <Label row="1" col="0" text="# Courses" class="info__label"></Label>
-                                <Label row="1" col="1" :text="horse.stats.race_count"></Label>
-                            
-                                <Label row="2" col="0" text="# Victoires" class="info__label"></Label>
-                                <Label row="2" col="1" :text="horse.stats.victory_count"></Label>
-                            
-                                <Label row="3" col="0" text="# Placés" class="info__label"></Label>
-                                <Label row="3" col="1" :text="horse.stats.placed_count"></Label>
-                            
-                                <Label row="4" col="0" text="Gains" class="info__label"></Label>
-                                <Label row="4" col="1" :text="horse.stats.earnings | price(0)"></Label>
-                            </GridLayout>
+                            <Label row="2" col="0" text="# Victoires" class="info__label"></Label>
+                            <Label row="2" col="1" :text="horse.stats.victory_count"></Label>
 
-                            <GridLayout col="1" columns="auto, *" rows="auto, auto, auto" class="trueskill" @tap="showLegend">
-                                <Label row="0" text="TrueSkill" />
-                                <Image row="0" col="1" src.decode="font://&#xf05a;" class="fas" />
+                            <Label row="3" col="0" text="# Placés" class="info__label"></Label>
+                            <Label row="3" col="1" :text="horse.stats.placed_count"></Label>
 
-                                <Label row="1" col="0" text="mu" class="info__label"></Label>
-                                <Label row="1" col="1" :text="horse.stats.trueskill_mu" class="trueskill__mu"></Label>
-                            
-                                <Label row="2" col="0" text="sigma" class="info__label"></Label>
-                                <Label row="2" col="1" :text="horse.stats.trueskill_sigma" class="trueskill__sigma"></Label>
-                            </GridLayout>
+                            <Label row="4" col="0" text="Gains" class="info__label"></Label>
+                            <Label row="4" col="1" :text="horse.stats.earnings | price(0)"></Label>
+                        </GridLayout>
 
+                        <GridLayout
+                            col="1"
+                            columns="auto, *"
+                            rows="auto, auto, auto"
+                            class="trueskill"
+                            @tap="showLegend"
+                        >
+                            <Label row="0" text="TrueSkill" />
+                            <Image row="0" col="1" src.decode="font://&#xf05a;" class="fas" />
+
+                            <Label row="1" col="0" text="mu" class="info__label"></Label>
+                            <Label
+                                row="1"
+                                col="1"
+                                :text="horse.stats.trueskill_mu"
+                                class="trueskill__mu"
+                            ></Label>
+
+                            <Label row="2" col="0" text="sigma" class="info__label"></Label>
+                            <Label
+                                row="2"
+                                col="1"
+                                :text="horse.stats.trueskill_sigma"
+                                class="trueskill__sigma"
+                            ></Label>
+                        </GridLayout>
+                    </GridLayout>
+                </StackLayout>
+
+                <StackLayout class="races" row="1">
+                    <StackLayout class="races__item races__item--tomorrow" v-if="tomorrowRace">
+                        <Label text="Demain" class="races__title" />
+                        <GridLayout
+                            columns="100, *, *"
+                            rows="20, 20, 20"
+                            @tap="onRaceTap(tomorrowRace)"
+                        >
+                            <Label
+                                row="0"
+                                col="0"
+                                :text="'R' + tomorrowRace.session.num + 'C' + tomorrowRace.num"
+                                class="item__info--title item__info"
+                            ></Label>
+                            <Label
+                                class="item__info item__info--location"
+                                row="2"
+                                col="0"
+                                :text="tomorrowRace.session.hippodrome.name"
+                            ></Label>
+
+                            <Label
+                                row="0"
+                                col="1"
+                                class="item__info item__info--date"
+                                :text="tomorrowRace.start_at | datetime"
+                            ></Label>
+                            <Label
+                                class="item__info"
+                                row="1"
+                                col="1"
+                                :text="tomorrowRace.declared_player_count + ' partants'"
+                            ></Label>
+                            <Label
+                                class="item__info"
+                                row="2"
+                                col="1"
+                                :text="tomorrowRace.prize | price"
+                            ></Label>
+
+                            <Label
+                                class="item__info"
+                                row="0"
+                                col="2"
+                                :text="tomorrowRace._odds | odds('rapport: ')"
+                            />
+                            <Label
+                                class="item__info item__info--position"
+                                row="1"
+                                col="2"
+                                rowSpan="2"
+                                :text="tomorrowRace._position | position"
+                            />
                         </GridLayout>
                     </StackLayout>
 
-                    <StackLayout class="races" row="1">
+                    <StackLayout class="races__item races__item--today" v-if="todayRace">
+                        <Label text="Ajourd'hui" class="races__title" />
+                        <GridLayout
+                            columns="100, *, *"
+                            rows="20, 20, 20"
+                            @tap="onRaceTap(todayRace)"
+                        >
+                            <Label
+                                row="0"
+                                col="0"
+                                :text="'R' + todayRace.session.num + 'C' + todayRace.num"
+                                class="item__info--title item__info"
+                            ></Label>
+                            <Label
+                                class="item__info item__info--location"
+                                row="2"
+                                col="0"
+                                :text="todayRace.session.hippodrome.name"
+                            ></Label>
 
-                        <StackLayout class="races__item races__item--tomorrow" v-if="tomorrowRace">
-                            <Label text="Demain" class="races__title" />
-                            <GridLayout columns="100, *, *" rows="20, 20, 20" @tap="onRaceTap(tomorrowRace)">
-                                <Label row="0" col="0" :text="'R' + tomorrowRace.session.num + 'C' + tomorrowRace.num" class="item__info--title item__info"></Label>
-                                <Label class="item__info item__info--location" row="2" col="0" :text="tomorrowRace.session.hippodrome.name"></Label>
-                                
-                                
-                                <Label row="0" col="1" class="item__info item__info--date" :text="tomorrowRace.start_at | datetime"></Label>
-                                <Label class="item__info" row="1" col="1" :text="tomorrowRace.declared_player_count + ' partants'"></Label>
-                                <Label class="item__info" row="2" col="1" :text="tomorrowRace.prize | price"></Label>
+                            <Label
+                                row="0"
+                                col="1"
+                                class="item__info item__info--date"
+                                :text="todayRace.start_at | datetime"
+                            ></Label>
+                            <Label
+                                class="item__info"
+                                row="1"
+                                col="1"
+                                :text="todayRace.declared_player_count + ' partants'"
+                            ></Label>
+                            <Label
+                                class="item__info"
+                                row="2"
+                                col="1"
+                                :text="todayRace.prize | price"
+                            ></Label>
 
-                                <Label class="item__info" row="0" col="2" :text="tomorrowRace._odds | odds('rapport: ')" />
-                                <Label class="item__info item__info--position" row="1" col="2" rowSpan="2" :text="tomorrowRace._position | position" />
-                            </GridLayout>
-                        </StackLayout>
-
-                        <StackLayout class="races__item races__item--today" v-if="todayRace">
-                            <Label text="Ajourd'hui" class="races__title" />
-                            <GridLayout columns="100, *, *" rows="20, 20, 20" @tap="onRaceTap(todayRace)">
-                                <Label row="0" col="0" :text="'R' + todayRace.session.num + 'C' + todayRace.num" class="item__info--title item__info"></Label>
-                                <Label class="item__info item__info--location" row="2" col="0" :text="todayRace.session.hippodrome.name"></Label>
-                                
-                                <Label row="0" col="1" class="item__info item__info--date" :text="todayRace.start_at | datetime"></Label>
-                                <Label class="item__info" row="1" col="1" :text="todayRace.declared_player_count + ' partants'"></Label>
-                                <Label class="item__info" row="2" col="1" :text="todayRace.prize | price"></Label>
-
-                                <Label class="item__info" row="0" col="2" :text="todayRace._odds | odds('rapport: ')" />
-                                <Label class="item__info item__info--position" row="1" col="2" rowSpan="2" :text="todayRace._position | position" />
-                            </GridLayout>
-                        </StackLayout>
-
-                        <Label text="Historique" class="races__title m-l-10" />
-
-                        <StackLayout class="races__item" v-for="race in pastRaces" :key="race.id">
-                            <GridLayout columns="100, *, *" rows="20, 20, 20" @tap="onRaceTap(race)">
-                                <Label row="0" col="0" :text="'R' + race.session.num + 'C' + race.num" class="item__info--title item__info"></Label>
-                                <Label class="item__info item__info--location" row="2" col="0" :text="race.session.hippodrome.name"></Label>
-                                
-                                
-                                <Label row="0" col="1" class="item__info item__info--date" :text="race.start_at | datetime"></Label>
-                                <Label class="item__info" row="1" col="1" :text="race.declared_player_count + ' partants'"></Label>
-                                <Label class="item__info" row="2" col="1" :text="race.prize | price"></Label>
-
-                                <Label class="item__info" row="0" col="2" :text="race._odds | odds('rapport: ')" />
-                                <Label class="item__info item__info--position" row="1" col="2" rowSpan="2" :text="race._position | position" />
-                            </GridLayout>
-                        </StackLayout>
-                        
+                            <Label
+                                class="item__info"
+                                row="0"
+                                col="2"
+                                :text="todayRace._odds | odds('rapport: ')"
+                            />
+                            <Label
+                                class="item__info item__info--position"
+                                row="1"
+                                col="2"
+                                rowSpan="2"
+                                :text="todayRace._position | position"
+                            />
+                        </GridLayout>
                     </StackLayout>
 
-                    </GridLayout>
+                    <Label text="Historique" class="races__title m-l-10" />
 
-                </ScrollView>
+                    <StackLayout class="races__item" v-for="r in pastRaces" :key="r.id">
+                        <GridLayout columns="100, *, *" rows="20, 20, 20" @tap="onRaceTap(r)">
+                            <Label
+                                row="0"
+                                col="0"
+                                :text="'R' + r.session.num + 'C' + r.num"
+                                class="item__info--title item__info"
+                            ></Label>
+                            <Label
+                                class="item__info item__info--location"
+                                row="2"
+                                col="0"
+                                :text="r.session.hippodrome.name"
+                            ></Label>
+
+                            <Label
+                                row="0"
+                                col="1"
+                                class="item__info item__info--date"
+                                :text="r.start_at | datetime"
+                            ></Label>
+                            <Label
+                                class="item__info"
+                                row="1"
+                                col="1"
+                                :text="r.declared_player_count + ' partants'"
+                            ></Label>
+                            <Label class="item__info" row="2" col="1" :text="r.prize | price"></Label>
+
+                            <Label
+                                class="item__info"
+                                row="0"
+                                col="2"
+                                :text="r._odds | odds('rapport: ')"
+                            />
+                            <Label
+                                class="item__info item__info--position"
+                                row="1"
+                                col="2"
+                                rowSpan="2"
+                                :text="r._position | position"
+                            />
+                        </GridLayout>
+                    </StackLayout>
+                </StackLayout>
             </GridLayout>
-
-            <ActivityIndicator color="#9E0059" :busy="processing.horse" height="50" width="50" />
-        </GridLayout>
-    </Page>
+        </ScrollView>
+    </GridLayout>
 </template>
 
 <script>
-import { mapState } from "vuex";
+import { mapState, mapMutations } from "vuex";
 import moment from "moment";
 
 import { ListViewItemSnapMode } from "nativescript-ui-listview";
@@ -144,78 +276,134 @@ import RaceLegend from "../Modals/RaceLegend";
 
 export default {
     props: ["context"],
+    data() {
+        return {
+            mode: undefined
+        }
+    },
     computed: {
         title() {
             return this.horse ? this.horse.name : "...";
         },
         showPlayers() {
-            if( this.race && this.horse ) {
-                let player = this.race.player_set.find(p => p.horse.id == this.horse.id)
+            if (this.race && this.horse) {
+                let player = this.race.player_set.find(
+                    p => p.horse.id == this.horse.id
+                );
                 return !!player;
             }
             return false;
         },
         pastRaces() {
-            if(!this.horse) return [];
-            let now = moment().format('YYYYMMDD')
-            return this.horse.races.results.filter(r => moment(r.start_at).format('YYYYMMDD') < now  )
+            if (!this.horse) return [];
+            let now = moment().format("YYYYMMDD");
+            return this.horse.races.results.filter(
+                r => moment(r.start_at).format("YYYYMMDD") < now
+            );
         },
         todayRace() {
-            if(!this.horse) return null;
-            let now = moment().format('YYYYMMDD')
-            let races = this.horse.races.results.filter(r => moment(r.start_at).format('YYYYMMDD') == now  )
-            return races.length > 0 ? races[0] : null
+            if (!this.horse) return null;
+            let now = moment().format("YYYYMMDD");
+            let races = this.horse.races.results.filter(
+                r => moment(r.start_at).format("YYYYMMDD") == now
+            );
+            return races.length > 0 ? races[0] : null;
         },
         tomorrowRace() {
-            if(!this.horse) return null;
-            let now = moment().format('YYYYMMDD')
-            let races = this.horse.races.results.filter(r => moment(r.start_at).format('YYYYMMDD') > now  )
-            return races.length > 0 ? races[0] : null
+            if (!this.horse) return null;
+            let now = moment().format("YYYYMMDD");
+            let races = this.horse.races.results.filter(
+                r => moment(r.start_at).format("YYYYMMDD") > now
+            );
+            return races.length > 0 ? races[0] : null;
         },
-        ...mapState(["horse", "race", "processing"])
+        horse() {
+            if (this.mode == "stats") {
+                return this.$store.state.stats_horse;
+            }
+            return this.$store.state.horse;
+        },
+        ...mapState(["race", "processing"])
     },
     methods: {
+        ...mapMutations(["updateUI"]),
+        load({ horse, mode }) {
+            this.mode = mode;
+            if(horse && horse.id) {
+                this.updateUI({title: horse.name})
+                this.$emit('start-loading')
+                setTimeout( () => {
+                    this.$store.dispatch("loadHorse", {id: horse.id, is_stats: mode == "stats"}).then(h => {
+                        this.$emit('end-loading')
+                        setTimeout(() => this.scrollPlayerList(), 250);
+                    })
+                    .catch(err => {
+                        this.$emit('end-loading')
+                    });
+                })
+            } else if (this.horse) {
+                this.updateUI({title: this.horse.name})
+                this.$emit('end-loading')
+            }
+        },
+        scrollToTop() {},
         scrollPlayerList() {
-            let i, idx = 0;
-            if(!this.showPlayers) return;
-            for(i=0; i < this.race.player_set.length; i++) {
-                if( this.race.player_set[i]._selected ) {
+            let i,
+                idx = 0;
+            if (!this.showPlayers) return;
+            for (i = 0; i < this.race.player_set.length; i++) {
+                if (this.race.player_set[i]._selected) {
                     idx = i;
                     break;
                 }
             }
-            if(this.$refs.playerList)
-                this.$refs.playerList.$el.nativeView.scrollToIndex(idx, true, ListViewItemSnapMode.Center);
+            if (this.$refs.playerList)
+                this.$refs.playerList.$el.nativeView.scrollToIndex(
+                    idx,
+                    true,
+                    ListViewItemSnapMode.Center
+                );
         },
         onNavigated(args) {
-            this.$store.dispatch("loadHorse", this.context.id).then(h => {
-                setTimeout( () => this.scrollPlayerList(), 500 )
-            });
+            
         },
         onPlayerTap(args) {
-            let player = args.item
+            let player = args.item;
+
+            this.$emit("change-view", {
+                view: "horse",
+                props: {
+                    horse: player.horse,
+                    mode: "stats"
+                }
+            })
+
             this.$store.dispatch("loadHorse", player.horse.id);
         },
         onRaceTap(race) {
-            this.$navTo(RaceDetails, {
-                frame: "stats",
-                transition: {
-                    name: "slide",
-                    duration: 200,
-                    curve: "ease"
-                },
-                animated: true,
+            this.$emit("change-view", {
+                view: "horserace",
                 props: {
-                    context: race,
-                    frame: "stats"
+                    race: race,
+                    mode: "stats"
                 }
-            });
+            })
         },
         onBack() {
             this.$navigateBack();
         },
         showLegend() {
-            this.$showModal(RaceLegend)
+            this.$emit("change-view", {
+                view: "__modal__",
+                props: {}
+            })
+
+            this.$showModal(RaceLegend).then(() => {
+                this.$emit("change-view", {
+                    view: "__modal__",
+                    props: {close: true}
+                })
+            });
         }
     }
 };
@@ -226,10 +414,18 @@ export default {
 @import "~/styles/transitions";
 
 @keyframes horse {
-    0% { transform: translate(0, 0) rotate(0deg); }
-    50% { transform: translate(0, -2) rotate(-15deg); }
-    75% { transform: translate(0, -4) rotate(-25deg); }
-    75% { transform: translate(0, -1) rotate(5deg); }
+    0% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+    50% {
+        transform: translate(0, -2) rotate(-5deg);
+    }
+    75% {
+        transform: translate(0, -3) rotate(-10deg);
+    }
+    75% {
+        transform: translate(0, 1) rotate(5deg);
+    }
 }
 
 ActionBar {
@@ -291,7 +487,7 @@ ActionBar {
         font-size: 15;
         text-align: center;
 
-        Image {
+        image {
             animation-name: horse;
             animation-iteration-count: infinite;
             animation-duration: 1s;
@@ -316,7 +512,7 @@ ActionBar {
             color: $orange;
         }
 
-        Image {
+        image {
             height: 20;
             width: 20;
             color: $yellow;
@@ -335,7 +531,6 @@ ActionBar {
         }
     }
 }
-
 
 .races {
     background-color: transparent;
@@ -396,7 +591,6 @@ ActionBar {
             }
 
             &--location {
-
             }
 
             &--position {

@@ -1,85 +1,126 @@
 <template>
-    <Page @navigatedTo="onNavigated">
-        <ActionBar flat>
-            <!--
-            <NavigationButton @tap="$navigateTo(Home)" android.systemIcon="ic_menu_back" />
-            -->
-            <Label class="page-title" text="Courses"></Label>
-        </ActionBar>
+    <GridLayout rows="auto, *">
+        <FlexboxLayout
+            row="0"
+            horizontalAlignment="center"
+            orientation="horizontal"
+            class="filters"
+            :class="{enabled: !processing.sessions}"
+        >
+            <StackLayout class="filters__item filters__item--nav">
+                <Image src.decode="font://&#xf053;" class="fas" @tap="onPrevDay" />
+            </StackLayout>
+            <StackLayout
+                class="filters__item filters__item--date"
+                orientation="horizontal"
+                @tap="onTapDate"
+            >
+                <Image
+                    src.decode="font://&#xf274;"
+                    class="fas"
+                    verticalAlignment="center"
+                    horizontalAlignment="center"
+                />
+                <Label
+                    verticalAlignment="center"
+                    horizontalAlignment="right"
+                    :isEnabled="!processing.sessions"
+                    :text="context.day | date"
+                />
+            </StackLayout>
+            <StackLayout class="filters__item filters__item--nav">
+                <Image src.decode="font://&#xf054;" class="fas" @tap="onNextDay" />
+            </StackLayout>
+        </FlexboxLayout>
 
-        <GridLayout>
-            <GridLayout rows="80, *" cols="*">
-                <FlexboxLayout row="0" horizontalAlignment="center" orientation="horizontal" class="filters" :class="{enabled: !processing.sessions}">
-                    <StackLayout class="filters__item filters__item--nav">
-                        <Image src.decode="font://&#xf053;" class="fas" @tap="onPrevDay"/>
-                    </StackLayout>
-                    <StackLayout class="filters__item filters__item--date" orientation="horizontal" @tap="onTapDate">
-                        <Image src.decode="font://&#xf274;" class="fas" verticalAlignment="center" horizontalAlignment="center" />
-                        <Label
-                            verticalAlignment="center"
-                            horizontalAlignment="right"
-                            :isEnabled="!processing.sessions"
-                            :text="context.day | date"
-                        />
-                    </StackLayout>
-                    <StackLayout class="filters__item filters__item--nav">
-                        <Image src.decode="font://&#xf054;" class="fas" @tap="onNextDay"/>
-                    </StackLayout>
-                </FlexboxLayout>
+        <GridLayout row="1" rows="90, *">
+            <GridLayout row="0" class="sessions">
 
-                <GridLayout row="1" rows="auto, *">
-                    
-                    <GridLayout row="0" class="sessions">
-                        <RadListView ref="sessionList" orientation="horizontal" for="s in sessions.results" @itemTap="onSessionTap">
-                            <v-template>
-                                <GridLayout>
-                                <StackLayout class="sessions__item" :class="{'sessions__item--active': s._selected}">
-                                    <Label :text="'R' + s.num" class="num" />
-                                    <Label :text="s.hippodrome.name" class="name" />
-                                    <Label :text="'(' + s.hippodrome.country + ')'" class="country" />
-                                </StackLayout>
-                                </GridLayout>
-                            </v-template>
-                        </RadListView>
-                    </GridLayout>
-                    
+                <ScrollView orientation="horizontal">
 
-                    <!--
-                    <ListPicker :items="sessionsList" @selectedIndexChange="onSelectSession" />
-                    -->
-                    
-                    <GridLayout row="1" class="session-details">
-                        <StackLayout v-if="session">
-
-                            <RadListView class="races" for="race in session.race_set" @itemTap="onRaceTap">
-                                <v-template>
-                                    <StackLayout class="races__item">
-                                        <GridLayout columns="auto, *, *" rows="20, 20, 20">
-                                            <Label rowSpan="3" row="0" col="0" :text="'R' + session.num + 'C' + race.num" class="item__title"></Label>
-                                            <Label class="item__info" row="0" col="1" :text="race.sub_category"></Label>
-                                            <Label class="item__info" row="1" col="1" :text="race.declared_player_count + ' partants'"></Label>
-                                            <Label class="item__info" row="2" col="1" :text="race.prize | price(0)"></Label>
-                                            <Label rowSpan="3" row="0" col="2" :text="race.start_at | time" class="item__date"></Label>
-                                        </GridLayout>
-                                    </StackLayout>
-                                </v-template>
-                            </RadListView>
+                        <StackLayout orientation="horizontal">
+                            <StackLayout v-for="s in sessions.results" @tap="onSessionTap(s)" :key="s.id"
+                                class="sessions__item"
+                                :class="{'sessions__item--active': s._selected}"
+                            >
+                                <Label :text="'R' + s.num" class="num" />
+                                <Label :text="s.hippodrome.name" class="name" />
+                                <Label :text="'(' + s.hippodrome.country + ')'" class="country" />
+                            </StackLayout>
                         </StackLayout>
-                    </GridLayout>
+                    
+                </ScrollView>
 
-                </GridLayout>
-
+                <StackLayout v-if="sessions.results.length == 0" class="empty" verticalAlignment="center" horizontalAlignment="center">
+                    <Label text="Aucune réunion trouvée pour cette date." />
+                </StackLayout>
             </GridLayout>
-            <ActivityIndicator color="#9E0059" :busy="processing.sessions" height="50" width="50" />
+
+            <!--
+                    <ListPicker :items="sessionsList" @selectedIndexChange="onSelectSession" />
+            -->
+
+            <GridLayout row="1" class="session-details">
+                <StackLayout v-if="session">
+                    <RadListView class="races" for="r in session.race_set" @itemTap="onRaceTap">
+                        <v-template>
+                            <StackLayout class="races__item">
+                                <GridLayout columns="auto, *, *" rows="20, 20, 20">
+                                    <Label
+                                        rowSpan="3"
+                                        row="0"
+                                        col="0"
+                                        :text="'R' + session.num + 'C' + r.num"
+                                        class="item__title"
+                                    ></Label>
+                                    <Label
+                                        class="item__info"
+                                        row="0"
+                                        col="1"
+                                        :text="r.sub_category"
+                                    ></Label>
+                                    <Label
+                                        class="item__info"
+                                        row="1"
+                                        col="1"
+                                        :text="r.declared_player_count + ' partants'"
+                                    ></Label>
+                                    <Label
+                                        class="item__info"
+                                        row="2"
+                                        col="1"
+                                        :text="r.prize | price(0)"
+                                    ></Label>
+                                    <Label
+                                        rowSpan="3"
+                                        row="0"
+                                        col="2"
+                                        :text="r.start_at | time"
+                                        class="item__date"
+                                    ></Label>
+                                </GridLayout>
+                            </StackLayout>
+                        </v-template>
+                    </RadListView>
+                </StackLayout>
+
+                <StackLayout class="empty" v-if="!session" horizontalAlignment="center" verticalAlignment="center">
+                    <StackLayout>
+                        <Image src.decode="font://&#xf127;" class="fas" />
+                        <Label text="Aucune course trouvée." />
+                        <Label :textWrap="true" text="Les courses à venir sont disponibles uniquement pour le jour même et le lendemain." />
+                    </StackLayout>
+                </StackLayout>
+            </GridLayout>
         </GridLayout>
-    </Page>
+    </GridLayout>
 </template>
 
 <script>
-import { mapState } from "vuex";
+import { mapState, mapMutations } from "vuex";
 
-import moment from 'moment';
-moment.locale('fr');
+import moment from "moment";
+moment.locale("fr");
 
 import { ListViewItemSnapMode } from "nativescript-ui-listview";
 
@@ -93,56 +134,59 @@ export default {
     },
     data: () => {
         return {
-            tabCreationHandler: null
+            
         };
     },
     computed: {
         sessionsList() {
-            return this.sessions.results.map(s => ('R' + s.num + ' ' + s.hippodrome.name))
+            return this.sessions.results.map(
+                s => "R" + s.num + " " + s.hippodrome.name
+            );
         },
         results() {
-            return this.sessions ? this.sessions.results : []
+            return this.sessions ? this.sessions.results : [];
         },
         ...mapState(["session", "sessions", "race", "context", "processing"])
     },
     created() {},
     mounted() {
-    
-    },
-    deleted() {
-        
-    },
-    methods: {
-        scrollSessionList() {
-            let i, idx = 0;
 
-            for(i=0; i < this.sessions.results.length; i++) {
-                if( this.sessions.results[i]._selected ) {
+    },
+    deleted() {},
+    methods: {
+        ...mapMutations(["updateUI"]),
+        load() {
+            this.updateUI({title: "Programme"})
+            if (this.sessions.results.length == 0) {
+                this.$emit("start-loading");
+                this.$store.dispatch("loadSessions").then(r => {
+                    this.$emit("end-loading");
+                }).catch(err => {
+                    this.$emit("end-loading");
+                });
+            } else {
+                this.$emit("end-loading");
+            }
+        },
+        scrollSessionList() {
+            let i,
+                idx = 0;
+
+            for (i = 0; i < this.sessions.results.length; i++) {
+                if (this.sessions.results[i]._selected) {
                     idx = i;
                     break;
                 }
             }
-            if(this.$refs.sessionList)
-                this.$refs.sessionList.$el.nativeView.scrollToIndex(idx, true, ListViewItemSnapMode.Center);
+            if (this.$refs.sessionList)
+                this.$refs.sessionList.$el.nativeView.scrollToIndex(
+                    idx,
+                    true,
+                    ListViewItemSnapMode.Center
+                );
         },
-        templateSelector(item, idx, items) {
-            if(!this.session || this.session.id != item.id) return 'default'
-            if(item.id == this.session.id) return 'active'
-        },
-        onSelectSession(e) {
-            console.log(e.value)
-            if( e.value < this.sessions.results.length )
-            this.$store.commit('setSession', this.sessions.results[e.value])
-        },
-        onSessionTap(args) {
-            this.$store.commit('setSession', args.item)
-        },
-        onNavigated() {
-            if( this.sessions.results.length == 0 )
-                this.$store.dispatch("loadSessions")
-                    .then(r => {
-                        setTimeout( () => this.scrollSessionList(), 500 )
-                    })
+        onSessionTap(session) {
+            this.$store.commit("setSession", session);
         },
         onTapDate() {
             this.$showModal(SessionSearch).then(r => {
@@ -162,27 +206,29 @@ export default {
             this.$store.dispatch("loadSessions");
         },
         onRaceTap(args) {
-            this.$navTo(RaceDetails, {
-                frame: "races",
-                transition: {
-                    name: "slide",
-                    duration: 200,
-                    curve: "ease"
-                },
-                animated: true,
+            this.$emit('change-view', {
+                view: "race",
                 props: {
-                    context: args.item,
-                    frame: "races"
+                    race: args.item
                 }
-            });
+            })
         }
     }
 };
 </script>
 
 <style scoped lang="scss">
-
 @import "~/styles/variables";
+
+@keyframes race {
+    0% {
+        transform: scale(1, 0.5);
+    }
+    100% {
+        transform: scale(1, 1);
+    }
+}
+
 
 ActionBar {
     background-color: $purple;
@@ -212,7 +258,7 @@ ActionBar {
         padding: 0;
         text-align: center;
 
-        Label {
+        label {
             background-color: transparent;
         }
 
@@ -229,7 +275,7 @@ ActionBar {
             font-size: 20;
             width: auto;
 
-            Image {
+            image {
                 width: 30;
                 height: 30;
                 margin-right: 5;
@@ -242,6 +288,11 @@ ActionBar {
     background-color: #ffdef1;
     color: #fff;
     height: 90;
+
+    .empty {
+        color: #ccc;
+        font-size: 14;
+    }
 
     &__item {
         background-color: $purple;
@@ -257,8 +308,8 @@ ActionBar {
 
         &--active {
             background-color: $yellow;
-            
-            Label {
+
+            label {
                 &.num {
                     color: #fff;
                 }
@@ -271,7 +322,7 @@ ActionBar {
             }
         }
 
-        Label {
+        label {
             padding: 0;
             font-size: 15;
 
@@ -291,6 +342,20 @@ ActionBar {
 
 .session-details {
     background-color: transparent;
+
+    .empty {
+        font-size: 14;
+        Image {
+            height: 50;
+            width: 50;
+            color: #ccc;
+            margin-bottom: 20;
+        }
+        text-align: center;
+        color: #ccc;
+        margin-left: 20;
+        margin-right: 20;
+    }
 }
 
 .session-header {
@@ -311,6 +376,9 @@ ActionBar {
         margin-bottom: 10;
         text-align: left;
         font-size: 10;
+
+        animation-name: race;
+        animation-duration: 250ms;
 
         .item__title {
             font-size: 20;

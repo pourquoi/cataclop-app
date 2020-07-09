@@ -1,36 +1,29 @@
 <template>
-    <Page @onNavigatedTo="onNavigated">
-        <ActionBar flat>
-            <Label class="page-title" text="Chevaux"></Label>
-        </ActionBar>
 
-        <GridLayout>
-            <GridLayout rows="auto, *" cols="*">
-                <GridLayout row="0" class="searchbar">
-                    <SearchBar hint="rechercher un cheval..." v-model="q" @textChange="onTextChange" @submit="onSubmit" @clear="onClear" />
-                </GridLayout>
+<GridLayout rows="auto, *" cols="*">
+    <GridLayout row="0" class="searchbar">
+        <SearchBar hint="rechercher un cheval..." v-model="q" @textChange="onTextChange" @submit="onSubmit" @clear="onClear" />
+    </GridLayout>
 
-                <GridLayout row="1" class="results">
-                    <RadListView for="horse in horses.results" @itemTap="onHorseTap">
-                        <v-template>
-                            <StackLayout>
-                                <GridLayout columns="*, auto" class="results__item">
-                                    <Label row="0" col="0" class="name" :text="horse.name"></Label>
-                                    <Label row="0" col="1" :text="horse.breed"></Label>
-                                </GridLayout>
-                            </StackLayout>
-                        </v-template>
-                    </RadListView>
-                </GridLayout>
-            
-            </GridLayout>
-            <ActivityIndicator color="#9E0059" :busy="processing.sessions" height="50" width="50" />
-        </GridLayout>
-    </Page>
+    <GridLayout row="1" class="results">
+        <RadListView for="horse in horses.results" @itemTap="onHorseTap">
+            <v-template>
+                <StackLayout>
+                    <GridLayout columns="*, auto" class="results__item">
+                        <Label row="0" col="0" class="name" :text="horse.name"></Label>
+                        <Label row="0" col="1" :text="horse.breed"></Label>
+                    </GridLayout>
+                </StackLayout>
+            </v-template>
+        </RadListView>
+    </GridLayout>
+
+</GridLayout>
+    
 </template>
 
 <script>
-import { mapState } from "vuex";
+import { mapState, mapMutations } from "vuex";
 
 import HorseDetails from "./HorseDetails";
 
@@ -44,10 +37,19 @@ export default {
         ...mapState(["horses", "processing"])
     },
     methods: {
-        onNavigated() {
-            if( !this.q && !this.horses.results.length ) {
-                this.$store.dispatch('loadHorses', this.q)    
-            }
+        ...mapMutations(["updateUI"]),
+        load() {
+            this.updateUI({title: 'Recherche'})
+            this.$emit('start-loading')
+            setTimeout(() => {
+                this.$store.dispatch('loadHorses', this.q)
+                    .then( r => {
+                        this.$emit('end-loading')
+                    })
+                    .catch(err => {
+                        this.$emit('end-loading')
+                    })
+            }, 250);
         },
         onTextChange() {
             this.$store.dispatch('loadHorses', this.q)
@@ -59,16 +61,11 @@ export default {
             this.$store.commit('clearHorses')
         },
         onHorseTap(args) {
-            this.$navTo(HorseDetails, {
-                frame: "stats",
-                transition: {
-                    name: "slide",
-                    duration: 200,
-                    curve: "ease"
-                },
-                animated: true,
+            this.$emit('change-view', {
+                view: 'horse',
                 props: {
-                    context: args.item
+                    horse: args.item,
+                    mode: 'stats'
                 }
             })
         }
